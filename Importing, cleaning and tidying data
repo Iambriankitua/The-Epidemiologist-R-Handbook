@@ -1,0 +1,71 @@
+# Install and load packages
+install.packages("rio")
+library(rio)
+
+# Import CSV file
+linelist <- import("data/linelist.csv")
+
+# Import Excel file
+linelist_excel <- import("data/linelist.xlsx")
+
+# View structure
+str(linelist)
+library(dplyr)
+library(tidyr)
+
+# Clean variable names
+linelist <- linelist %>%
+  rename(
+    age_years = age,
+    sex = gender
+  )
+
+# Filter missing values
+linelist_clean <- linelist %>%
+  filter(!is.na(age_years))
+
+# Create new variable
+linelist_clean <- linelist_clean %>%
+  mutate(age_group = case_when(
+    age_years < 5 ~ "Child",
+    age_years < 18 ~ "Adolescent",
+    TRUE ~ "Adult"
+  ))
+
+# Select useful columns
+linelist_clean <- linelist_clean %>%
+# Convert wide to long format
+data_long <- linelist_clean %>%
+  pivot_longer(
+    cols = starts_with("symptom"),
+    names_to = "symptom",
+    values_to = "present"
+  )
+install.packages("lubridate")
+library(lubridate)
+
+# Convert character to date
+linelist_clean <- linelist_clean %>%
+  mutate(date_onset = ymd(date_onset))
+
+# Extract components
+linelist_clean <- linelist_clean %>%
+  mutate(
+    year = year(date_onset),
+    month = month(date_onset),
+    weekday = wday(date_onset, label = TRUE)
+  )
+
+# Calculate time difference
+linelist_clean <- linelist_clean %>%
+  mutate(
+    days_since_onset = as.numeric(Sys.Date() - date_onset)
+  )
+# Count cases by date (useful for epidemic curves)
+library(dplyr)
+
+daily_cases <- linelist_clean %>%
+  count(date_onset)
+
+head(daily_cases)
+  select(case_id, age_years, sex, age_group)
