@@ -1,0 +1,88 @@
+# Load packages
+library(tidyverse)
+
+# Example dataset
+linelist <- read.csv("linelist.csv")
+
+# Inspect data
+glimpse(linelist)
+
+# Select relevant columns
+linelist_clean <- linelist %>%
+  select(case_id, age, sex, district, date_onset)
+
+# Filter rows (e.g., remove missing age)
+linelist_clean <- linelist_clean %>%
+  filter(!is.na(age))
+
+# Create new variable (age group)
+linelist_clean <- linelist_clean %>%
+  mutate(age_group = case_when(
+    age < 5 ~ "0-4",
+    age < 15 ~ "5-14",
+    age < 50 ~ "15-49",
+    TRUE ~ "50+"
+  ))
+
+# Arrange data
+linelist_clean <- linelist_clean %>%
+  arrange(date_onset)
+
+# View cleaned data
+head(linelist_clean)
+# Load package
+library(lubridate)
+
+# Convert character to date
+linelist_clean$date_onset <- dmy(linelist_clean$date_onset)
+
+# Extract components
+linelist_clean <- linelist_clean %>%
+  mutate(
+    onset_day = day(date_onset),
+    onset_month = month(date_onset, label = TRUE),
+    onset_year = year(date_onset)
+  )
+
+# Calculate time differences
+linelist_clean <- linelist_clean %>%
+  arrange(date_onset) %>%
+  mutate(days_since_first = date_onset - min(date_onset, na.rm = TRUE))
+
+# Create epidemiological week
+linelist_clean <- linelist_clean %>%
+  mutate(epi_week = epiweek(date_onset))
+
+# View results
+head(linelist_clean)
+# Load package
+library(stringr)
+
+# Standardize text (lowercase)
+linelist_clean <- linelist_clean %>%
+  mutate(district = str_to_lower(district))
+
+# Trim whitespace
+linelist_clean <- linelist_clean %>%
+  mutate(district = str_trim(district))
+
+# Replace inconsistent spellings
+linelist_clean <- linelist_clean %>%
+  mutate(district = str_replace_all(district, "nairob[iy]", "nairobi"))
+
+# Detect patterns (e.g., missing or unknown)
+linelist_clean <- linelist_clean %>%
+  mutate(
+    district_flag = if_else(str_detect(district, "unknown|na"), "Check", "OK")
+  )
+
+# Extract part of string (e.g., ID prefix)
+linelist_clean <- linelist_clean %>%
+  mutate(case_prefix = str_extract(case_id, "^[A-Z]+"))
+
+# View cleaned strings
+head(linelist_clean)
+
+
+
+
