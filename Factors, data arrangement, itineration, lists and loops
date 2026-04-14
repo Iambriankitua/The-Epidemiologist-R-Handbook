@@ -1,0 +1,78 @@
+library(forcats)
+
+# Convert to factor
+data$sex <- as.factor(data$sex)
+
+# View levels
+levels(data$sex)
+
+# Reorder levels
+data$sex <- fct_relevel(data$sex, "Male", "Female")
+
+# Recode categories
+data$sex <- fct_recode(data$sex,
+                       "M" = "Male",
+                       "F" = "Female")
+library(tidyr)
+
+# Wide to long
+long_data <- pivot_longer(data,
+                          cols = c(day1, day2, day3),
+                          names_to = "day",
+                          values_to = "value")
+
+# Long to wide
+wide_data <- pivot_wider(long_data,
+                         names_from = day,
+                         values_from = value)
+library(dplyr)
+
+# Group and summarise
+summary_table <- data %>%
+  group_by(district) %>%
+  summarise(
+    cases = n(),
+    mean_age = mean(age, na.rm = TRUE)
+  )
+
+summary_table
+# Example datasets
+cases <- data.frame(id = 1:5, age = c(20, 30, 25, 40, 35))
+lab <- data.frame(id = 1:5, result = c("pos", "neg", "pos", "neg", "pos"))
+
+# Left join
+merged_data <- left_join(cases, lab, by = "id")
+
+# Inner join
+merged_inner <- inner_join(cases, lab, by = "id")
+
+merged_data
+# Identify duplicates
+duplicates <- data[duplicated(data$case_id), ]
+
+# Remove duplicates
+data_unique <- data %>%
+  distinct(case_id, .keep_all = TRUE)
+
+# Count duplicates
+sum(duplicated(data$case_id))
+# Example: loop through variables
+variables <- c("age", "height", "weight")
+
+for (var in variables) {
+  print(mean(data[[var]], na.rm = TRUE))
+}
+
+# Using lists
+list_data <- list(
+  df1 = data.frame(x = 1:5),
+  df2 = data.frame(x = 6:10)
+)
+
+# Apply function to list
+lapply(list_data, function(df) mean(df$x))
+# Using apply family
+means <- sapply(data[, c("age", "height", "weight")],
+                mean, na.rm = TRUE)
+
+means
