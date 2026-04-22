@@ -1,0 +1,77 @@
+library(dplyr)
+library(skimr)
+
+# Summary of dataset
+skim(df)
+
+# Grouped descriptive table
+df %>%
+  group_by(age_group) %>%
+  summarise(
+    count = n(),
+    mean_age = mean(age, na.rm = TRUE),
+    sd_age = sd(age, na.rm = TRUE)
+  )
+# T-test (compare means)
+t.test(age ~ sex, data = df)
+
+# Chi-square test (association between categorical variables)
+table_exposure <- table(df$exposure, df$outcome)
+chisq.test(table_exposure)
+
+# Fisher's exact test (small samples)
+fisher.test(table_exposure)
+# Linear regression
+model1 <- lm(age ~ exposure, data = df)
+summary(model1)
+
+# Multivariable regression
+model2 <- lm(age ~ exposure + sex + comorbidity, data = df)
+summary(model2)
+
+# Logistic regression (binary outcome)
+model3 <- glm(outcome ~ exposure + age + sex,
+              data = df,
+              family = binomial)
+summary(model3)
+
+# Confidence intervals
+confint(model3)
+library(naniar)
+
+# Visualize missing data
+vis_miss(df)
+
+# Count missing values
+colSums(is.na(df))
+
+# Remove missing rows
+df_clean <- df %>% drop_na()
+
+# Simple imputation (mean)
+df$age[is.na(df$age)] <- mean(df$age, na.rm = TRUE)
+library(epitools)
+
+# Example: age-standardised rate
+age_specific <- c(10, 20, 30)     # observed rates
+standard_pop <- c(1000, 2000, 3000)
+
+std_rate <- ageadjust.direct(count = age_specific,
+                             pop = standard_pop)
+
+std_rate
+library(zoo)
+
+# Create moving average (7-day)
+df <- df %>%
+  arrange(date) %>%
+  mutate(
+    cases_ma7 = rollmean(cases, k = 7, fill = NA, align = "right")
+  )
+
+# Plot
+library(ggplot2)
+
+ggplot(df, aes(x = date)) +
+  geom_line(aes(y = cases), alpha = 0.5) +
+  geom_line(aes(y = cases_ma7), color = "blue", size = 1)
