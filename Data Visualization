@@ -1,0 +1,149 @@
+# Install and load packages
+pacman::p_load(
+  tidyverse,
+  rio,
+  here,
+  stringr,
+  scales,
+  ggrepel,
+  gghighlight,
+  RColorBrewer,
+  flextable
+)
+# Example outbreak summary table
+
+library(dplyr)
+library(flextable)
+
+summary_table <- linelist %>%
+  group_by(hospital) %>%
+  summarise(
+    total_cases = n(),
+    recovered = sum(outcome == "Recovered", na.rm = TRUE),
+    deaths = sum(outcome == "Died", na.rm = TRUE)
+  )
+
+summary_table
+my_table <- flextable(summary_table)
+
+my_table <- my_table %>%
+  bg(part = "body", bg = "gray95") %>%
+  bold(part = "header") %>%
+  autofit()
+
+my_table
+linelist <- rio::import("linelist_cleaned.rds")
+library(ggplot2)
+
+ggplot(data = linelist, aes(x = age)) +
+  geom_histogram() +
+  labs(
+    title = "Distribution of Ages",
+    x = "Age",
+    y = "Count"
+  )
+ggplot(data = linelist, aes(x = age)) +
+  geom_histogram(bins = 50) +
+  labs(title = "Histogram with More Bins")
+ggplot(data = linelist,
+       aes(x = age, color = gender)) +
+  geom_freqpoly(binwidth = 2, size = 1.5) +
+  labs(title = "Frequency Polygon by Gender")
+ggplot(data = linelist,
+       aes(x = age,
+           y = after_stat(density),
+           fill = gender)) +
+  geom_density(alpha = 0.3) +
+  labs(title = "Density Plot")
+ggplot(
+  linelist,
+  aes(x = gender, fill = outcome)
+) +
+  geom_bar(position = "fill", color = "black") +
+  theme_classic() +
+  labs(
+    x = "Gender",
+    y = "Proportion",
+    title = "Outcome by Gender"
+  )
+ggplot(
+  linelist,
+  aes(x = age, y = days_onset_hosp)
+) +
+  geom_point(alpha = 0.6) +
+  theme_minimal() +
+  labs(
+    title = "Age vs Days from Onset to Hospitalization",
+    x = "Age",
+    y = "Days"
+  )
+ggplot(
+  linelist,
+  aes(x = age)
+) +
+  geom_histogram(fill = "steelblue") +
+  facet_wrap(~ gender) +
+  theme_bw()
+ggplot(
+  linelist,
+  aes(x = gender, fill = gender)
+) +
+  geom_bar() +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+library(ggrepel)
+
+ggplot(
+  linelist,
+  aes(x = age,
+      y = days_onset_hosp,
+      label = case_id)
+) +
+  geom_point() +
+  geom_text_repel()
+library(gghighlight)
+
+ggplot(
+  linelist,
+  aes(x = age,
+      y = days_onset_hosp,
+      color = gender)
+) +
+  geom_point() +
+  gghighlight(gender == "Female")
+linelist$gender <- factor(
+  linelist$gender,
+  levels = c("Female", "Male")
+)
+
+ggplot(
+  linelist,
+  aes(x = gender)
+) +
+  geom_bar(fill = "tomato")
+library(cowplot)
+
+p1 <- ggplot(linelist, aes(x = age)) +
+  geom_histogram()
+
+p2 <- ggplot(linelist, aes(x = gender)) +
+  geom_bar()
+
+plot_grid(p1, p2, labels = c("A", "B"))
+options(scipen = 999)
+
+scales::number(620000)
+
+scales::comma(1506800.62)
+
+scales::percent(0.42)
+
+scales::dollar(56)
+ggplot(
+  linelist,
+  aes(x = date_onset)
+) +
+  geom_histogram(binwidth = 7) +
+  scale_x_date(date_breaks = "1 month",
+               date_labels = "%b %Y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
